@@ -1,8 +1,10 @@
-package org.linuxmotion.asyncloaders;
+package org.linuxmotion.asyncloaders.utils;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
+import org.linuxmotion.asyncloaders.LogWrapper;
 
 public class BitmapHelper {
     private static final String TAG = BitmapHelper.class.getSimpleName();

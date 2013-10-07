@@ -1,4 +1,4 @@
-package org.linuxmotion.asyncloaders;
+package org.linuxmotion.asyncloaders.utils;
 
 import android.os.Environment;
 

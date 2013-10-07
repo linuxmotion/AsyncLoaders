@@ -23,7 +23,7 @@ public class LogWrapper {
     }
     public static void Logi(String tag, String msg) {
 
-        if(Constants.INFORMATIONAL)Log.v(tag, msg);
+        if(Constants.INFORMATIONAL)Log.i(tag, msg);
 
     }
     public static void Loge(String tag, String msg) {

@@ -1,4 +1,7 @@
-package org.linuxmotion.asyncloaders;
+package org.linuxmotion.asyncloaders.io;
+
+import org.linuxmotion.asyncloaders.utils.StrictLineReader;
+import org.linuxmotion.asyncloaders.utils.Util;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;

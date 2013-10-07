@@ -1,4 +1,4 @@
-package org.linuxmotion.asyncloaders;
+package org.linuxmotion.asyncloaders.utils;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.ExecutionException;
@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutionException;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+
+import org.linuxmotion.asyncloaders.ImageLoaderTask;
 
 public class AsyncDrawable extends BitmapDrawable {
     private final WeakReference<ImageLoaderTask> ImageloaderTaskReference;

@@ -7,6 +7,9 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.widget.ImageView;
 
+import org.linuxmotion.asyncloaders.utils.AeSimpleSHA1;
+import org.linuxmotion.asyncloaders.utils.BitmapHelper;
+
 public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
 
     private static final String TAG = ImageLoaderTask.class.getSimpleName();
@@ -14,16 +17,19 @@ public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
     private String mKey;
     private String mPath;
     private ImageLoader mLoader;
+    private boolean mLoading;
 
     public ImageLoaderTask(ImageLoader loader, ImageView imageView) {
         mLoader = loader;
         imageViewReference = new WeakReference<ImageView>(imageView);
+        mLoading = false;
 
     }
 
     @Override
     // Actual download method, run in the task thread
     protected Bitmap doInBackground(String... params) {
+        mLoading = true;
         // params comes from the execute() call: params[0] is the url.
         if (params.length == 0) {
 
@@ -35,10 +41,10 @@ public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
 
         //String hash = String.valueOf((new File(f)).hashCode());
 
-        if (isCancelled()) return null;
-
         try {
-            if (isCancelled()) return null;
+            if (checkCancelled()) {
+                return null;
+            }
             Bitmap bitmap = mLoader.getBitmapFromDiskCache(mKey);
             if (bitmap != null)
                 LogWrapper.Logv(TAG, "Using disk cached bitmap for image = " + mKey);
@@ -57,20 +63,30 @@ public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
             //can still be null here if it could not decode, ie a video file
 
         } catch (OutOfMemoryError e) {
-            if (isCancelled()) return null;
+
             LogWrapper.Loge("ImageLoaderTask", "Failed to decode the bitmap due to Out of Memory Error");
             System.gc(); // Try and start garbage collection
+            if (checkCancelled()) {
+                return null;
+            }
 
-            if (isCancelled()) return null;
         }
 
         return null;
     }
 
+    private boolean checkCancelled() {
+        if (isCancelled()){
+            mLoading = false;
+            return true;
+        }
+        return false;
+    }
+
     @Override
     // Once the image is downloaded, associates it to the imageView
     protected void onPostExecute(Bitmap bitmap) {
-        if (isCancelled()) {
+        if (checkCancelled()) {
             bitmap.recycle();
             bitmap = null;
         }
@@ -84,6 +100,7 @@ public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
             }
 
         }
+        return;
     }
 
     /**

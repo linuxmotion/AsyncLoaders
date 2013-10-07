@@ -13,6 +13,10 @@ import android.graphics.drawable.Drawable;
 import android.util.LruCache;
 import android.widget.ImageView;
 
+import org.linuxmotion.asyncloaders.io.DiskLruImageCache;
+import org.linuxmotion.asyncloaders.utils.AeSimpleSHA1;
+import org.linuxmotion.asyncloaders.utils.AsyncDrawable;
+
 
 public class ImageLoader {
     private static final String TAG = ImageLoader.class.getSimpleName();
@@ -106,32 +110,63 @@ public class ImageLoader {
         }
     }
 
+    /**
+     * Is there a task running on the current imageview.
+     * If there is a task running, check to see if the
+     * imageview is being reused. If it is not being reused
+     * then a new task should be started with the required
+     * data. If imageview is being reused then cancel
+     * the current running task
+     * @param abspath The path to the image to decode
+     * @param imageView The imageview in which to store the decoded image
+     * @return True if the decoding was a reused imageview and it was not cancelled
+     */
     private static boolean cancelPotentialDecoding(String abspath, ImageView imageView) {
         ImageLoaderTask bitmapDownloaderTask = getImageLoaderTask(imageView);
 
 
         if (bitmapDownloaderTask != null) {
-
+            // Get the loader task key
             String bitmapPath = bitmapDownloaderTask.getKey();
+
             String retHash = null;
-            if (bitmapPath != null) retHash = AeSimpleSHA1.SHA1(bitmapPath);
+            if (bitmapPath != null){
+                // Create sha1 of the saved key
+                retHash = AeSimpleSHA1.SHA1(bitmapPath);
+            }
+            else {
+                // The task must not have run
+                LogWrapper.Logv(TAG, "No key to loaderTask");
+            }
+
+            // create sha1 of the absolute path to image, (local path only??)
             String absHash = AeSimpleSHA1.SHA1(abspath);
 
 
             LogWrapper.Logi(TAG, "The Sha1 has of the path: " + bitmapPath + " is hash: " + retHash);
 
-            // Cancel the task if the view is being reused
-            if ((retHash != null) && (absHash != null) && (retHash != absHash)) {
-                LogWrapper.Logi(TAG, "Prevoius task for image key: " +
-                        retHash + " was cancelled = " +
-                        bitmapDownloaderTask.cancel(true));
-
-            } else {
-                // The same URL is already being downloaded.
+            if ((retHash != null) || (absHash != null))
                 return false;
+            // Cancel the task if the view is being reused
+            // the saved key hash should match the path provided
+            // if it is the same picture and imageview
+            if (retHash != absHash) {
+
+                // The ta
+                boolean cancelled = bitmapDownloaderTask.cancel(true);
+                LogWrapper.Logi(TAG, "Prevoius task for image key: " +
+                        retHash + " was cancelled = " + cancelled
+                        );
+                return false;
+
             }
+            else
+            {
+                return true;
+            }
+
         }
-        return true;
+        return false;
     }
 
     protected static ImageLoaderTask getImageLoaderTask(ImageView imageView) {
@@ -150,30 +185,50 @@ public class ImageLoader {
         if (abspath == null) {
             throw new NullPointerException("The path for the image view is null");
         }
+        if (imageView == null) {
+            throw new NullPointerException("The imageview is null");
+        }
 
-        //if (!mTaksHeld && cancelPotentialDecoding(abspath, imageView)) {
+        // Cancel a current task if it exists
+        if (cancelPotentialDecoding(abspath, imageView)) {
+            // There was a reused imageview and it was not
+            // a different image, use the mem cache if it
+            //exists and is available
+            if(!setBitmapFromMemCache(abspath, imageView)){
+                LogWrapper.Logd(TAG, "Cached image not available.");
+            }
+            else {
+                // The cached image was used
+                return;
+            }
+        }
+
+        // Start a new task for the current imageview
+        ImageLoaderTask task = new ImageLoaderTask(this, imageView);
+        AsyncDrawable downloadedDrawable = new AsyncDrawable(mContext.getResources(), mLoadingMap, task);
+        imageView.setImageDrawable(downloadedDrawable);
+        try {
+            task.execute(abspath);
+        } catch (RejectedExecutionException e) {
+            //e.printStackTrace();
+            // Is the cancel function having a fall through
+        }
+
+
+
+    }
+
+    private boolean setBitmapFromMemCache(String abspath, ImageView imageView) {
         if (mUseCache) {
 
             Bitmap bmap = getBitmapFromMemCache(AeSimpleSHA1.SHA1(abspath));
             if (bmap != null) {
 
                 imageView.setImageBitmap(bmap);
-                return;
+                return true;
             }
         }
-        if (cancelPotentialDecoding(abspath, imageView)) {
-            ImageLoaderTask task = new ImageLoaderTask(this, imageView);
-            AsyncDrawable downloadedDrawable = new AsyncDrawable(mContext.getResources(), mLoadingMap, task);
-            imageView.setImageDrawable(downloadedDrawable);
-            try {
-                task.execute(abspath);
-            } catch (RejectedExecutionException e) {
-                //e.printStackTrace();
-                // Is the cancel function having a fall through
-            }
-        }
-
-
+        return false;
     }
 
     private void initDiskCache(Context context, int cacheSize) {

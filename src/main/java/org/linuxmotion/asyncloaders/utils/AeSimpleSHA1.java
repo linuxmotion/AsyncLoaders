@@ -1,4 +1,4 @@
-package org.linuxmotion.asyncloaders;
+package org.linuxmotion.asyncloaders.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -21,6 +21,29 @@ public class AeSimpleSHA1 {
         }
         return buf.toString();
     }
+
+    public static String SHA1(byte[] stream, int length){
+
+
+        MessageDigest md = null;
+
+        try{
+            md = MessageDigest.getInstance("SHA-1");
+            md.update(stream, 0, length);
+            byte[] sha1hash = md.digest();
+            return convertToHex(sha1hash);
+
+        }catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "Contact the developer";
+
+
+
+
+
+    }
+
 
     public static String SHA1(String text)
     {

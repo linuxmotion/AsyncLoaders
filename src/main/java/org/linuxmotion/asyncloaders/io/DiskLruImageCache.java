@@ -1,4 +1,4 @@
-package org.linuxmotion.asyncloaders;
+package org.linuxmotion.asyncloaders.io;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -14,6 +14,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap.CompressFormat;
 import android.util.Log;
+
+import org.linuxmotion.asyncloaders.Constants;
+import org.linuxmotion.asyncloaders.utils.FileUtils;
 
 
 /**
