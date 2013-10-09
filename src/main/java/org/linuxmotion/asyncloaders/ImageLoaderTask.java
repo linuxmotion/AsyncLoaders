@@ -46,10 +46,12 @@ public class ImageLoaderTask extends AsyncTask<String, Void, Bitmap> {
                 return null;
             }
             Bitmap bitmap = mLoader.getBitmapFromDiskCache(mKey);
-            if (bitmap != null)
+            if (bitmap != null){
                 LogWrapper.Logv(TAG, "Using disk cached bitmap for image = " + mKey);
-            // No cached bitmap found
-            if (bitmap == null) bitmap = BitmapHelper.decodeSampledBitmapFromImage(mPath, 50, 50);
+            }else{
+                bitmap = BitmapHelper.decodeSampledBitmapFromImage(mPath, 50, 50);
+            }
+
             if (bitmap != null) {// Add bitmap to cache if bitmap was decoded
 
                 LogWrapper.Logi(TAG, "[Bitmap Height = " + bitmap.getHeight() + "]");

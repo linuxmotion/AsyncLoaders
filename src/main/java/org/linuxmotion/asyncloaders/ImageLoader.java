@@ -145,12 +145,12 @@ public class ImageLoader {
 
             LogWrapper.Logi(TAG, "The Sha1 has of the path: " + bitmapPath + " is hash: " + retHash);
 
-            if ((retHash != null) || (absHash != null))
+            if ((retHash == null) || (absHash == null))
                 return false;
             // Cancel the task if the view is being reused
             // the saved key hash should match the path provided
             // if it is the same picture and imageview
-            if (retHash != absHash) {
+            if (retHash.equals(absHash)) {
 
                 // The ta
                 boolean cancelled = bitmapDownloaderTask.cancel(true);
@@ -191,16 +191,17 @@ public class ImageLoader {
 
         // Cancel a current task if it exists
         if (cancelPotentialDecoding(abspath, imageView)) {
-            // There was a reused imageview and it was not
-            // a different image, use the mem cache if it
-            //exists and is available
-            if(!setBitmapFromMemCache(abspath, imageView)){
-                LogWrapper.Logd(TAG, "Cached image not available.");
-            }
-            else {
-                // The cached image was used
-                return;
-            }
+
+        }
+
+        if(setBitmapFromMemCache(abspath, imageView)){
+            // The cached image was used
+            LogWrapper.Logd(TAG, "Found cached image.");
+            return;
+        }
+        else {
+            LogWrapper.Logd(TAG, "Cached image not available.");
+
         }
 
         // Start a new task for the current imageview
@@ -208,6 +209,7 @@ public class ImageLoader {
         AsyncDrawable downloadedDrawable = new AsyncDrawable(mContext.getResources(), mLoadingMap, task);
         imageView.setImageDrawable(downloadedDrawable);
         try {
+
             task.execute(abspath);
         } catch (RejectedExecutionException e) {
             //e.printStackTrace();
@@ -218,12 +220,19 @@ public class ImageLoader {
 
     }
 
+    /**
+     *
+     * @param abspath The path to the image to use
+     * @param imageView The imageview to use
+     * @return true if the bitmap was set, false otherwise
+     */
     private boolean setBitmapFromMemCache(String abspath, ImageView imageView) {
         if (mUseCache) {
 
-            Bitmap bmap = getBitmapFromMemCache(AeSimpleSHA1.SHA1(abspath));
+            String hash = AeSimpleSHA1.SHA1(abspath);
+            Bitmap bmap = getBitmapFromMemCache(hash);
             if (bmap != null) {
-
+                LogWrapper.Logv(TAG, "Setting the cached bitmap into the view");
                 imageView.setImageBitmap(bmap);
                 return true;
             }
